@@ -366,6 +366,12 @@ class Vtiger_List_View extends Vtiger_Index_View {
 		$listViewController = $listViewModel->get('listview_controller');
 		$selectedHeaderFields = $listViewController->getListViewHeaderFields();
 
+        #for export
+        if($moduleName =='PurchaseOrder'){
+			$_SESSION['purchaseorder_list_headers'] = $this->listViewHeaders;
+			$_SESSION['purchaseorder_list_entries'] = $this->listViewEntries;
+		}
+
 		$viewer->assign('ORDER_BY',$orderBy);
 		$viewer->assign('SORT_ORDER',$sortOrder);
 		$viewer->assign('NEXT_SORT_ORDER',$nextSortOrder);

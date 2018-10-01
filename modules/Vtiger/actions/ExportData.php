@@ -39,6 +39,15 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 		$db = PearDatabase::getInstance();
 		$moduleName = $request->get('source_module');
 
+		if($moduleName == 'PurchaseOrder'){
+			if($_SESSION['purchaseorder_list_headers'] && $_SESSION['purchaseorder_list_entries']){
+                  $headers = $_SESSION['purchaseorder_list_headers'];
+                  $entries = $_SESSION['purchaseorder_list_entries'];
+                  $this->output2($request,$headers,$entries);
+                  return;
+			}
+		}
+
 		$this->moduleInstance = Vtiger_Module_Model::getInstance($moduleName);
 		$this->moduleFieldInstances = $this->moduleFieldInstances($moduleName);
 		$this->focus = CRMEntity::getInstance($moduleName);
@@ -262,6 +271,60 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 			echo $line;
 		}
 	}
+
+	/**
+	 * Function that create the exported file
+	 * @param Vtiger_Request $request
+	 * @param <Array> $headers - output file header
+	 * @param <Array> $entries - outfput file data
+	 */
+	function output2($request, $headers, $entries) {
+		$moduleName = $request->get('source_module');
+		$log = LoggerManager::getLogger('SECURITY');
+		$fileName = str_replace(' ','_',decode_html(vtranslate($moduleName, $moduleName)));
+		// for content disposition header comma should not be there in filename 
+		$fileName = str_replace(',', '_', $fileName);
+		$exportType = $this->getExportContentType($request);
+
+		header("Content-Disposition:attachment;filename=$fileName.csv");
+		header("Content-Type:$exportType;charset=UTF-8");
+		header("Expires: Mon, 31 Dec 2000 00:00:00 GMT" );
+		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT" );
+		header("Cache-Control: post-check=0, pre-check=0", false );
+
+        $new_headers  = array();
+		foreach ($headers as $header) {
+			$field_name = $header->get('label');
+			$new_headers[]= vtranslate($field_name, $field_name);
+		}
+
+		$header = implode("\", \"", $new_headers);
+		$header = "\"" .$header;
+		$header .= "\"\r\n";
+		echo $header;
+
+		foreach ($entries as $entry) {
+			# get value format ??? -->tpl
+			$line_values = array();
+            foreach ($headers as $header) {
+            	$header_name = $header->get('name');
+            	$value =  $entry->get($header_name);
+            	
+            	if(strpos($value,'</a>') === false){
+                    $line_values[] = $value;
+            	}else{
+                   $str = htmlspecialchars_decode($value);
+                   $str = preg_replace("/<a[^>]*>(.*?)<\/a>/is", "$1", $str);
+                   $line_values[] = $str;
+            	}
+            }
+            $line = implode("\",\"",$line_values);
+			$line = "\"" .$line;
+			$line .= "\"\r\n";
+			echo $line;
+		}
+	}
+
 
 	private $picklistValues;
 	private $fieldArray;
