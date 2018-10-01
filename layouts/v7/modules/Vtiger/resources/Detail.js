@@ -1187,10 +1187,14 @@ Vtiger.Class("Vtiger_Detail_Js",{
 		thisInstance.registerSaveOnEnterEvent(editElement);
 		jQuery('.editAction').addClass('hide');
 
-		if(fieldType == 'picklist' || fieldType == 'ownergroup' || fieldType == 'owner') {
+		if(fieldType == 'picklist' || fieldType == 'ownergroup' || fieldType == 'owner' || fieldType === 'multipicklist') {
 			var sourcePicklistFieldName = thisInstance.getDependentSourcePicklistName(fieldName);
 			if(sourcePicklistFieldName) {
-				thisInstance.handlePickListDependencyMap(sourcePicklistFieldName);
+				if(fieldType === 'multipicklist'){
+                    thisInstance.handlePickListDependencyMap(sourcePicklistFieldName,true);
+				}else{
+					thisInstance.handlePickListDependencyMap(sourcePicklistFieldName);
+				}
 			}
 		}
 	},
@@ -1394,7 +1398,7 @@ Vtiger.Class("Vtiger_Detail_Js",{
 		});
 	},
 
-	handlePickListDependencyMap : function(sourcePicklistName) {
+	handlePickListDependencyMap : function(sourcePicklistName,is_multi=false) {
 		var container = this.getForm();
 		var picklistDependcyElemnt = jQuery('[name="picklistDependency"]',container);
 		if(picklistDependcyElemnt.length <= 0) {
@@ -1419,6 +1423,13 @@ Vtiger.Class("Vtiger_Detail_Js",{
 				targetPickListMap = targetPickListValues;
 			}
 			var targetPickList = jQuery('[name="'+targetPickListName+'"]',container);
+
+            if(is_multi){
+                				var targetPickList = jQuery('[name="'+targetPickListName+'[]"]',container); // '[name="'+targetPickListName+'[]"]'
+			}else{
+				var targetPickList = jQuery('[name="'+targetPickListName+'"]',container); // '[name="'+targetPickListName+'[]"]'
+			}
+
 			if(targetPickList.length <= 0){
 				return;
 			}
